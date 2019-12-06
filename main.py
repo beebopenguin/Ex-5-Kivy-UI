@@ -4,6 +4,9 @@ from kivy.app import App
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.properties import ObjectProperty
+from kivy.animation import Animation
+from kivy.clock import Clock, mainthread
 
 from pidev.MixPanel import MixPanel
 from pidev.kivy.PassCodeScreen import PassCodeScreen
@@ -17,6 +20,7 @@ MIXPANEL = MixPanel("Project Name", MIXPANEL_TOKEN)
 SCREEN_MANAGER = ScreenManager()
 MAIN_SCREEN_NAME = 'main'
 ADMIN_SCREEN_NAME = 'admin'
+ANOTHER_SCREEN_NAME = 'other'
 
 
 class ProjectNameGUI(App):
@@ -33,6 +37,27 @@ class ProjectNameGUI(App):
 
 
 Window.clearcolor = (1, 1, 1, 1)  # White
+
+class AnotherScreen(Screen):
+    def __init__(self, **kwargs):
+        """
+        Load the AdminScreen.kv file. Set the necessary names of the screens for the PassCodeScreen to transition to.
+        Lastly super Screen's __init__
+        :param kwargs: Normal kivy.uix.screenmanager.Screen attributes
+        """
+        Builder.load_file('AnotherScreen.kv')
+
+
+
+        super(AnotherScreen, self).__init__(**kwargs)
+
+    @staticmethod
+    def go_back():
+        """
+        Transition back to the main screen
+        :return:
+        """
+        SCREEN_MANAGER.current = MAIN_SCREEN_NAME
 
 
 class MainScreen(Screen):
@@ -55,6 +80,29 @@ class MainScreen(Screen):
         """
         SCREEN_MANAGER.current = 'passCode'
 
+    countButton = ObjectProperty(None)
+    button_state = ObjectProperty(None)
+    global counter
+    counter = 0
+
+    def updateCounter(self):
+        global counter
+        counter = counter + 1
+        self.countButton.text = "%d" % counter
+
+    def image_transition_anim(self):
+        Clock.schedule_once(self.image_transition, 2)
+        Clock.schedule_once(self.image_reset, 3)
+        anim = Animation(pos_hint={"x": 0.5, "y": 0.5}) + Animation(size=(500,500), duration=1.)
+        anim.start(self.ids.animatedImageButton)
+
+    def image_reset(self, value):
+        anim = Animation(pos_hint={"x": 0.2, "y": 0.7}, duration=0) + Animation(size=(200, 200), duration=0.)
+        anim.start(self.ids.animatedImageButton)
+
+    @staticmethod
+    def image_transition(self):
+        SCREEN_MANAGER.current = ANOTHER_SCREEN_NAME
 
 class AdminScreen(Screen):
     """
@@ -106,6 +154,7 @@ SCREEN_MANAGER.add_widget(MainScreen(name=MAIN_SCREEN_NAME))
 SCREEN_MANAGER.add_widget(PassCodeScreen(name='passCode'))
 SCREEN_MANAGER.add_widget(PauseScreen(name='pauseScene'))
 SCREEN_MANAGER.add_widget(AdminScreen(name=ADMIN_SCREEN_NAME))
+SCREEN_MANAGER.add_widget(AnotherScreen(name=ANOTHER_SCREEN_NAME))
 
 """
 MixPanel
